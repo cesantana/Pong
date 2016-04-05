@@ -5,7 +5,9 @@ var HelloWorldLayer = cc.Layer.extend({
     pelota:null,    
     puntuacion1:null,
     puntuacion2:null,
-    inicializar:function(){
+    speed:null,
+    inicializar : function(){
+    this.speed=5;
         var size = cc.winSize;
         var color = cc.color(100,100,100);
 
@@ -23,11 +25,6 @@ var HelloWorldLayer = cc.Layer.extend({
         lineaDivisoria.drawSegment(cc.p(size.width/2,0),cc.p(size.width/2,size.height),3,color);
         this.addChild(lineaDivisoria,0);
         
-        this.pelota =  new cc.DrawNode();
-        this.pelota.drawCircle(cc.p(0,0),5,0,100,false,10,color);
-        this.pelota.setPosition(size.width / 2,size.height / 2);
-        this.addChild(this.pelota, 1);
-
         this.puntuacion1 = new cc.LabelTTF("0","Arial",24);
         this.puntuacion1.setPosition(size.width * 0.4, size.height - (size.height * 0.10));
         this.addChild(this.puntuacion1,0);
@@ -36,12 +33,62 @@ var HelloWorldLayer = cc.Layer.extend({
         this.puntuacion2.setPosition(size.width - (size.width * 0.4), size.height - (size.height * 0.10));
         this.addChild(this.puntuacion2,0);
         
+        this.pelota =  new cc.DrawNode();
+        this.pelota.drawCircle(cc.p(0,0),5,0,100,false,10,color);
+        this.pelota.setPosition(size.width / 2,size.height / 2);
+        this.addChild(this.pelota, 1);
+        var moveto = cc.moveTo(this.speed, -10, this.random(0, size.height));
+        this.pelota.runAction(moveto);
+        
     },
+    
+    //random para dar direccion a la pelota
+    random: function getRandomInt(min, max) {
+    	return Math.floor(Math.random() * (max - min + 1)) + min;
+	},
+    
+    //mover barras con WS & flecha arriba y abajo
+    move1 : function(key, event){
+      
+        cc.log("Mover barra");
+        var size = cc.winSize;
+        var  move = event.getCurrentTarget();
+        
+         switch(key){
+            case 38:
+                 cc.log("Mover barra2");
+                move.jugador2.y += size.height/20;
+                move.jugador2.y = Math.min(move.jugador2.y, size.height - 100);            
+                break;
+             case 40:
+                  cc.log("Mover barra2");
+                move.jugador2.y -= size.height/20;
+                move.jugador2.y = Math.max(move.jugador2.y, 0);
+                 break;
+            case 87:
+                cc.log("Mover barra1");
+                move.jugador1.y += size.height/20;
+                move.jugador1.y = Math.min(move.jugador1.y, size.height - 100);
+                break;
+            case 83:
+                cc.log("Mover barra1");
+                move.jugador1.y -= size.height/20;
+                move.jugador1.y = Math.max(move.jugador1.y, 0);
+                break;
+        }
+    },
+    
     ctor:function () {
         this._super();
         this.inicializar();
 
-
+            //Inicializar evento de jugados 1
+        cc.eventManager.addListener({ 
+            event: cc.EventListener.KEYBOARD,
+            onKeyPressed: this.move1,
+            }, this);
+        
+               
         return true;
     }
 });
