@@ -5,6 +5,7 @@ var HelloWorldLayer = cc.Layer.extend({
     pelota:null,    
     puntuacion1:null,
     puntuacion2:null,
+    btn:null,
     speed:null,
     inicializar : function(){
     this.speed=5;
@@ -40,6 +41,9 @@ var HelloWorldLayer = cc.Layer.extend({
         var moveto = cc.moveTo(this.speed, -10, this.random(0, size.height));
         this.pelota.runAction(moveto);
         
+        this.btn = new cc.Sprite(res.Reset_png);
+        this.btn.setPosition(28, 28);
+        this.addChild(this.btn,0);
     },
     
     //random para dar direccion a la pelota
@@ -47,13 +51,14 @@ var HelloWorldLayer = cc.Layer.extend({
     	return Math.floor(Math.random() * (max - min + 1)) + min;
 	},
     
+    
     //mover barras con WS & flecha arriba y abajo
     move1 : function(key, event){
       
         cc.log("Mover barra");
         var size = cc.winSize;
         var  move = event.getCurrentTarget();
-        
+    
          switch(key){
             case 38:
                  cc.log("Mover barra2");
@@ -78,6 +83,63 @@ var HelloWorldLayer = cc.Layer.extend({
         }
     },
     
+    movePelota : function(){
+        var curScene = cc.director.getRunningScene();
+        var allChildren = curScene.getChildren();
+        var moveto = cc.moveTo(allChildren[0].speed, -10, allChildren[0].random(0, cc.winSize.height));
+        allChildren[0].pelota.stopAllActions();
+        allChildren[0].pelota.runAction(moveto);
+        cc.director.resume();
+    },
+    
+    play : function(){
+        if(this.pelota.x <= cc.winSize.width*0.1 - 10){
+            var num = parseInt(this.puntuacion2.string);
+            num++;
+            this.puntuacion2.string = num;
+            this.centro();
+        }
+        if(this.pelota.x >= cc.winSize.width - (cc.winSize.width * 0.1) + 10){
+            var num = parseInt(this.puntuacion1.string);
+            num++;
+            this.puntuacion1.string = num;
+            this.centro();
+        }
+    },
+    
+    //poner pelota en el centro
+    centro : function(){
+        this.pelota.setPosition(cc.winSize.width / 2, cc.winSize.height / 2);
+            cc.director.pause();
+            setTimeout(this.movePelota, 2000);
+    },
+    
+    //resetear puntuacion y lugar
+    reset : function(Location,event){
+        var locate = Location.getLocation();
+        if (locate.x<=50 && locate.y<=50){  
+            cc.log("reset fn");
+            var num=0;
+            this.puntuacion1 = num;
+            this.puntuacion2 = num;
+            this.centro();
+            cc.log("cemtro");
+        }
+    },
+    
+    //hace rebotar a la pelota
+    rebotar : function(){
+        if( Math.abs(this.pelota.x - this.jugador1.x) <= 36 && Math.abs(this.pelota.y - this.jugador1.y) <= 100){
+            var moveto = cc.moveTo(this.speed, cc.winSize.width+10, this.random(0, cc.winSize.height));
+            this.pelota.stopAllActions();
+            this.pelota.runAction(moveto);
+        }
+        if( Math.abs(this.pelota.x - this.jugador2.x) <= 23 &&  Math.abs(this.pelota.y - this.jugador2.y) <= 100){
+            var moveto = cc.moveTo(this.speed, -10, this.random(0, cc.winSize.height));
+            this.pelota.stopAllActions();
+            this.pelota.runAction(moveto);
+        }
+    },
     ctor:function () {
         this._super();
         this.inicializar();
@@ -88,7 +150,17 @@ var HelloWorldLayer = cc.Layer.extend({
             onKeyPressed: this.move1,
             }, this);
         
-               
+        //time to play!!
+        this.schedule(this.play, 0.1);
+          
+        // rebota!!!! Pelotita rebota!!!
+        this.schedule(this.rebotar, 0.1);
+        
+        cc.eventManager.addListener({
+            event: cc.EventListener.TOUCH_ONE_BY_ONE,
+            onTouchBegan: this.reset,
+        }, this);
+        
         return true;
     }
 });
